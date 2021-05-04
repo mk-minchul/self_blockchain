@@ -172,8 +172,22 @@ class Blockchain {
      */
     getStarsByWalletAddress (address) {
         let self = this;
-        let stars = [];
+        let stars = []
         return new Promise((resolve, reject) => {
+            let blockDataPromises = [];
+            self.chain.forEach(block => {
+                blockDataPromises.push(block.getBData())
+            })
+            Promise.all(blockDataPromises).then(blocks => {
+                for (const block of blocks){
+                    if (block.owner == address){
+                        stars.push(block)
+                    }
+                }
+                resolve(stars)
+            }).catch(
+                console.error('error during resolving all getBData()')
+            )
         });
     }
 
@@ -186,8 +200,29 @@ class Blockchain {
     validateChain() {
         let self = this;
         let errorLog = [];
-        return new Promise(async (resolve, reject) => {
-            
+        let validatePromises = []
+        return new Promise((resolve, reject) => {
+            self.chain.forEach((block, idx) => {
+                let prevBlockHash = null
+                if (idx > 0) {
+                    prevBlockHash = self.chain[idx - 1].hash
+                }
+                // check previous block hash
+                if (block.previousBlockHash != prevBlockHash) {
+                    errorLog.push(`[block height:${idx}] current block's previousBlockHash is not equal to previous block's hash`)
+                }
+                validatePromises.push(block.validate())
+            })
+            Promise.all(validatePromises).then(validationResults => {
+                validationResults.forEach((result, idx) => {
+                    if (!result) {
+                        errorLog.push(`[block height:${idx}] current block's hash did not validate`)
+                    }
+                })
+            }).catch(
+                console.error('error during resolving validatePromises')
+            )
+            resolve(errorLog)
         });
     }
 
