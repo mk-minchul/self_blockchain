@@ -75,13 +75,13 @@ class Blockchain {
             self.chain.push(block)
 
             self.validateChain().then(errorLogs => {
-                if (length(errorLogs) == 0) {
+                if (errorLogs.length == 0) {
                     resolve(block)
                 } else {
                     self.chain.pop()
                     reject(errorLogs)
                 }
-            })
+            }
         });
     }
 
@@ -228,10 +228,10 @@ class Blockchain {
                         errorLog.push(`[block height:${idx}] current block's hash did not validate`)
                     }
                 })
+            resolve(errorLog)
             }).catch(
                 console.error('error during resolving validatePromises')
             )
-            resolve(errorLog)
         });
     }
 
