@@ -73,7 +73,15 @@ class Blockchain {
             }
             block.hash = SHA256(JSON.stringify(block)).toString()
             self.chain.push(block)
-            resolve(block)
+
+            self.validateChain().then(errorLogs => {
+                if (length(errorLogs) == 0) {
+                    resolve(block)
+                } else {
+                    self.chain.pop()
+                    reject(errorLogs)
+                }
+            })
         });
     }
 
@@ -118,7 +126,8 @@ class Blockchain {
                 reject('Message is too outdated (more than 5 minutes).')
                 return
             }
-            if (bitcoinMessage.verify(message, address, signature, undefined, true) == false){
+            // if (bitcoinMessage.verify(message, address, signature, undefined, true) == false){
+            if (bitcoinMessage.verify(message, address, signature) == false){
                 reject('Address and the signature does not check.')
                 return
             }
